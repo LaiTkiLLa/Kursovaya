@@ -3,16 +3,9 @@ import json
 import time
 from tqdm import tqdm
 
-fields = 'id,media_url'
-access_token_instagram = input('Введите долгосрочный токен инстаграм:\n')
-ya_token = input('Введите токен яндекса:\n')
-media_id = input('Введите user_id:\n')
-url_insta = 'https://graph.instagram.com/me/media?fields='+fields+'&access_token='+access_token_instagram
-url_ya_create_path = 'https://cloud-api.yandex.net/v1/disk/resources'
-url_ya_upload_photo = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
-headers = {"Authorization": ya_token}
-
-def photo_link():
+def photo_link(access_token_instagram = input('Введите долгосрочный токен инстаграм:\n')):
+    fields = 'id,media_url'
+    url_insta = 'https://graph.instagram.com/me/media?fields=' + fields + '&access_token=' + access_token_instagram
     res = requests.get(url=url_insta)
     response = res.json()['data']
     links = []
@@ -24,16 +17,18 @@ def photo_link():
         names.append(name)
     return links, names
 
-def create_path():
+def create_path(new_folder = input('Введите название папки:\n'),ya_token = input('Введите токен яндекса:\n')):
     links,names = photo_link()
-    new_folder = input('Введите название папки:\n')
+    headers = {"Authorization": ya_token}
+    url_ya_create_path = 'https://cloud-api.yandex.net/v1/disk/resources'
     params_new_folder = {'path':new_folder}
     resp = requests.put(url=url_ya_create_path, headers=headers, params=params_new_folder)
-    return new_folder
+    return new_folder, headers
 
 def upload_photo_insta():
     links,names = photo_link()
-    new_folder = create_path()
+    new_folder, headers = create_path()
+    url_ya_upload_photo = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
     upload_photo = list(zip(links, names))
     for values in upload_photo:
         params_insta = {'path': f'{new_folder}/{values[1]}', 'overwrite': 'true', 'url': values[0]}
